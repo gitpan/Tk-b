@@ -1,0 +1,49 @@
+#!/usr/local/bin/perl -w
+
+BEGIN 
+ {
+  require lib;
+  chomp($dir = `pwd`);
+  import lib "$dir/blib";
+ }
+
+use Tk;
+require Tk::TextUndo;
+require Tk::FileSelect;
+use Tk::ErrorDialog;
+
+my $top = MainWindow->new();
+my $mb  = $top->Component(Menubar => 'menubar',
+                       '-pack' => [ -side => 'top', -fill => 'x' ]);
+
+my $fs  = $top->Component(FileSelect => 'fs',-width => 25, -height => 8,
+                       '-accept'   => sub 
+                                     { my $file = shift ; 
+                                       return 0 if (-s $file && !(stat(_))[12]);
+                                       return (-r $file) && (-T $file);  
+                                     },
+                       Name => 'fs', -filter => '*');
+
+my $t = $top->Component(TextUndo => 'text', -wrap => 'none', -bg => 'white');
+
+$mb->command(-button => ['File',-underline => 0],
+             -label => 'Open', -underline => 0, 
+             -command => sub { my $file = $fs->Show(-popover => $top);
+                               $t->Load($file) if (defined $file);
+                             });
+$mb->command(-button => 'File', 
+             -label => 'Save', -underline => 0, 
+             -command => [ $t , 'Save' ]);
+$mb->command(-button => 'File', -label => 'Quit', -underline => 0, 
+              -command => [ 'destroy',$top ] );
+
+$top->Delegates(DEFAULT => $t); 
+$top->ConfigSpecs(DEFAULT => [$t]); 
+$t->pack(-expand => 1, -fill => 'both');
+$top->AddScrollbars($t);
+$top->ConfigDefault(\%args);
+$top->configure(%args) if (%args);
+
+$t->Load($ARGV[0]) if (@ARGV);
+
+MainLoop;
