@@ -19,6 +19,9 @@ sub Populate
   }
  $w->menu(-tearoff => 0);
  $w->configure(-textvariable => $var);
+
+ # Should we allow -menubackground etc. as in -label* of Frame ?
+
  $w->ConfigSpecs(-command => [CALLBACK,undef,undef,undef],
                  -options => [METHOD, undef, undef, undef] 
                 );
@@ -29,8 +32,7 @@ sub setOption
  my ($w,$val) = @_;
  my $var = $w->cget(-textvariable);
  $$var = $val;
- my $cb = $w->cget('-command');
- $cb->Call($val) if (defined $cb);
+ $w->Callback(-command => $val);
 }
 
 sub options

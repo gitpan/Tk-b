@@ -1,35 +1,17 @@
 use Config;
 use ExtUtils::MakeMaker;
-
-$define = "-DTK_LIBRARY=\\\"$Config{'privlib'}/Tk\\\"";
-$inc    = "";
-# The existence of the ./pTk/Makefile.PL file causes MakeMaker
-# to automatically include Makefile code for the targets
-#	config, all, clean, realclean and sdbm/Makefile
-# which perform the corresponding action in the subdirectory.
-
-require '../myConfig.out';
-require '../MMutil';
-
-if (&try_compile("config/signedchar.c"))
- {
-  $define .= " -DANSI_SIGNED_CHAR";
- }
-else
- {
-  if (&try_run("config/unsigned.c"))
-   {
-    $define .= " -DCHAR_UNSIGNED";
-   }
- }
-
-$inc .= " -I." ; 
+use lib '..';
+use Tk::MMtry qw(try_compile);
+use Tk::MMutil;
+use Tk::Config;
 
 WriteMakefile(
-    'LINKTYPE'  => 'static',
+    'NAME'	=> 'Tk::pTk',
+    'VERSION'	=> $Tk::Config::VERSION,
+    'LINKTYPE'	=> 'static',
     'DEFINE'	=> $define,
-    'INC'	=> $inc,
-    'SKIP'	=> [qw(static static_lib dynamic dynamic_lib distclean 
+    'INC'	=> "$inc -I.",
+    'SKIP'	=> [qw(static_lib dynamic dynamic_lib distclean 
                        test perldepend dist makeaperl xs_o)],
     'clean' 	=> {'FILES' => 'libpTk.a *%'}
 );
@@ -37,36 +19,36 @@ WriteMakefile(
 sub MY::xs_c {
 '
 # Rules for building .t table files from .h files
-.SUFFIXES:
-.SUFFIXES: .a .o .c .xs .t .h 
-
+.SUFFIXES: .t .h 
 .h.t :
 	$(PERL) mkVFunc $< 
 '
 }
 
-sub MY::post_constants {
-
-my $objects = "LIBOBJS =";
-unless (defined($Config{'i_stdlib'}) && &try_compile("config/Hstrtoul.c"))
- {
-  $objects .= " strtoul.o" 
- }
-my $len     = length($objects);
-foreach (<[LXt]*.c>)
+sub MY::post_constants 
 {
- s/\.c/.o/;
- if (($len+length($_)+1) > 72)
+ my $objects = "LIBOBJS =";
+ unless (defined($Config{'i_stdlib'}) && try_compile("config/Hstrtoul.c"))
   {
-   $objects .= "\\\n\t";
-   $len = 8;
+   $objects .= " strtoul.o" 
   }
- $objects .= " $_";
- $len     += 1+length($_);
-} 
-$objects .= "\n";
-
-return "\n" . $objects . &upgrade_pic();
+ unless (defined($Config{'i_string'}) && try_compile("config/Hstrdup.c"))
+  {
+   $objects .= " strdup.o" 
+  }
+ my $len     = length($objects);
+ foreach (<[LXt]*.c>)
+  {
+   s/\.c/.o/;
+   if (($len+length($_)+1) > 72)
+    {
+     $objects .= "\\\n\t";
+     $len = 8;
+    }
+   $objects .= " $_";
+   $len     += 1+length($_);
+  } 
+ return "\n" . $objects . "\n";
 };
 
 sub MY::install {
@@ -75,35 +57,32 @@ install :: all
 ';
 }
 
-sub MY::top_targets {
-'
-all     :: static 
 
+sub MY::static 
+{
+ '
 static  ::	libpTk.a 
 
-dynamic ::	libpTk.a 
+dynamic :: static 
 
 libpTk.a: $(LIBOBJS) 
 	ar cr libpTk.a $(LIBOBJS)
 	$(RANLIB) libpTk.a
 
-$(LIBOBJS): $(HDRS)
-
-
 ';
+
 }
 
+
 sub MY::realclean {
-	'
+'
 realclean :: clean
 	rm -f Makefile
 ';
 }
 
 sub MY::postamble {
-join('',`cat *.d`) . '
-Makefile : ../myConfig.out
-
+'
 Lang.t  : Lang.h   mkVFunc
 tk.t    : tk.h     mkVFunc
 tkInt.t : tkInt.h  mkVFunc
@@ -114,5 +93,27 @@ config :: Lang.t tk.t tkInt.t tkImgPhoto.t
 
 ';
 }
+
+sub MY::post_initialize
+{
+ my ($self) = @_;
+ my %files = ();
+ my $name;
+ my $dir = $self->catdir('$(INST_ARCHLIBDIR)','pTk');
+ foreach $name ($self->lsdir("."))
+  {
+   next if ($name =~ /^\./);
+   next unless (-f $name);
+   $files{$name} = 1 if ($name =~ /\.[tm]$/);
+  }
+ foreach $name (sort(@{$self->{H}},keys %files))
+  {
+   $self->{PM}->{$name} = $self->catfile($dir,$name);
+  }
+ '';
+}
+
+
+
 
 

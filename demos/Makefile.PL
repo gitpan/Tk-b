@@ -1,14 +1,8 @@
-use ExtUtils::MakeMaker;
-
-$Version = '1.0';
+use lib '..';
+use Tk::MMutil;
+Tk::MMutil::TkExtMakefile(
+      'EXE_FILES' => ['widget'],
+      'linkext' => { LINKTYPE => ''}
+      );
                            
-WriteMakefile(
-    'NAME'     => 'Tk::demos',
-    'LINKTYPE' => '',
-    'EXE_FILES' => ['widget'],
-    'clean' => {FILES => "*% *.bak"},
-    'linkext' => { LINKTYPE => ''},
-    'VERSION'  => $Version
-);
-
 

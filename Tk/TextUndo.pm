@@ -1,7 +1,6 @@
 package Tk::TextUndo;
 require Tk::Text;
 use AutoLoader;
-use Carp;
 
 @ISA = qw(Tk::Text);
 
@@ -80,7 +79,7 @@ sub Save
 {
  my $text = shift;
  my $file = (@_) ? shift : $text->{FILE};
- croak "No filename defined" unless (defined $file);
+ $text->BackTrace("No filename defined") unless (defined $file);
  if (open(FILE,">$file"))
   {
    print FILE $text->get('1.0','end');
@@ -88,7 +87,7 @@ sub Save
   }
  else
   {
-   croak "Cannot open $file:$!";
+   $text->BackTrace("Cannot open $file:$!");
   }
 }
 
@@ -110,7 +109,7 @@ sub Load
   }
  else
   {
-   croak "Cannot open $file:$!";
+   $text->BackTrace("Cannot open $file:$!");
   }
 }
 

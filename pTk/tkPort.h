@@ -16,6 +16,7 @@
 
 #ifndef _TKPORT
 #define _TKPORT
+#include "tkConfig.h"
 
 /*
  * Macro to use instead of "void" for arguments that must have
@@ -219,9 +220,20 @@ extern int errno;
 #define write(a,b,c) TclWrite(a,b,c)
 
 #ifdef TIMEOFDAY_NO_TZ
-extern int gettimeofday _ANSI_ARGS_((struct timeval *tp));
+#define Tk_timeofday(x) gettimeofday(x)
+ extern int gettimeofday _ANSI_ARGS_((struct timeval *tp));
 #else
+#ifdef TIMEOFDAY_TZ
+#define Tk_timeofday(x) gettimeofday(x, (struct timezone *) 0)
 extern int gettimeofday _ANSI_ARGS_((struct timeval *tp ,struct timezone *tzp));
+#else
+#define Tk_timeofday(x) gettimeofday(x, (void *) 0)
+#ifdef TIMEOFDAY_DOTS
+extern int gettimeofday _ANSI_ARGS_((struct timeval *tp, ...));
+#else
+extern int gettimeofday _ANSI_ARGS_((struct timeval *tp, void *));
+#endif
+#endif
 #endif
 
 #ifdef USE_BCOPY

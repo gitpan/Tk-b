@@ -11,7 +11,7 @@
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
-static char sccsid[] = "@(#) tkBind.c 1.98 95/06/04 17:37:03";
+static char sccsid[] = "@(#) tkBind.c 1.100 95/09/25 13:18:59";
 
 #include "tkPort.h"
 #include "tkInt.h"

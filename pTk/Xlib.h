@@ -138,7 +138,9 @@ extern int XDrawImageString _ANSI_ARGS_((Display *, Drawable, GC, int, int, cons
 extern int XWarpPointer _ANSI_ARGS_(( Display *, Window, Window, int, int, unsigned int, unsigned int, int, int ));
 extern int XDrawPoints _ANSI_ARGS_(( Display*, Drawable, GC, XPoint*, int, int));
 extern int XChangeGC _ANSI_ARGS_(( Display*, GC, unsigned long, XGCValues *));
-
+extern char **XListFonts _ANSI_ARGS_(( Display*, const char *, int, int *));
+extern int XFreeFontNames _ANSI_ARGS_((char **));
+extern Window XGetSelectionOwner _ANSI_ARGS_((Display *, Atom));
 #endif /* _XLIB_H_ */
 extern int _XInitImageFuncPtrs _ANSI_ARGS_((XImage *image));
 #endif /* _XLIB */

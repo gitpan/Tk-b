@@ -1,4 +1,33 @@
-The user visible changes in Tk-b9 / Tk-b9.01
+The user visible changes in Tk-b9 / Tk-b9.01 / Tk-b10.
+
+Most of user-level changes occurred in Tk-b9, Tk-b10 is mainly 
+internal cleanup and documentation improvements and changes to Makefile.PL's
+to suit perl5.002.
+
+Tk-b10 has changed to $Tk::VERSION rather than $Tk:Version to be consistent
+with other packages.
+
+Tk-b10 has renamed Tk::BackgroundError to just Tk::Error - this makes
+it more like Tcl/Tk and will allow C API's  BackgroundError to be exported
+to perl one day.
+
+The major change in Tk-b10 is that the doc subdirectory now contains 
+'man' and HTML docs which are in terms of perl/Tk syntax rather than Tcl/Tk.
+Some of the *.pod files have been incorporated there too.
+The install process for docs is still not sorted though.
+
+Error trapping has been "improved". There may be cases where it is 
+now too strong.
+
+Tk::Widget::after is now a wrapper on core Tk 'after' and auto-cancels
+when widget is destroyed. OnDestroy method is also available for general 
+use.
+
+Added alias handling to derived widgets ConfigSpecs().
+
+Changes for (a little) more detail.
+
+Remaining changes are common to Tk-b9* ...
 
 * Most if not all 'sub commands' now have an alias 
   e.g. 

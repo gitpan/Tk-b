@@ -4,7 +4,7 @@ require DynaLoader;
 @Tk::Canvas::ISA = qw(DynaLoader Tk::Widget); 
 Tk::Widget->Construct('Canvas');
 
-bootstrap Tk::Canvas;
+bootstrap Tk::Canvas $Tk::VERSION;
 
 sub Tk_cmd { \&Tk::canvas }
 

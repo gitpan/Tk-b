@@ -9,13 +9,13 @@
 #include <XSUB.h>
 #include <fcntl.h>
 
-#include "../tkGlue.def"
+#include "tkGlue.def"
 
-#include "tkPort.h"
-#include "tkInt.h"
-#include "tkVMacro.h"
-#include "../tkGlue.h"
-#include "../tkGlue.m"
+#include "pTk/tkPort.h"
+#include "pTk/tkInt.h"
+#include "pTk/tkVMacro.h"
+#include "tkGlue.h"
+#include "tkGlue.m"
 
 DECLARE_VTABLES;
 
@@ -149,6 +149,8 @@ SV *sv;
 
 MODULE = Tk::IO	PACKAGE = Tk::IO
 
+PROTOTYPES: DISABLE
+
 SV *
 read(f,buf,len,offset = 0)
 FILE *	f
@@ -251,6 +253,8 @@ FILE *	f
      croak("Cannot make non-blocking");
     }
   }
+
+
 
 BOOT:
  {

@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl -w
 
 use Config;
-use lib "./blib";
+
 
 use Tk qw(exit);
 use Carp;
@@ -229,6 +229,10 @@ sub dialogue
 }
 
 $top = MainWindow->new();
+
+$top->bind('MainWindow','<Map>',
+            sub { printf "Mapped after %.3g seconds\n",&Tk::Time_So_Far });
+
 $camel   = $top->Photo('-file'  => Tk->findINC("Xcamel.gif"));
 
 if (@ARGV)
@@ -246,7 +250,7 @@ sub ShowVersion
 "Core Tk version : $Tk::version
 Tk patchLevel : $Tk::patchLevel 
 library : $Tk::library
-perl/Tk Version : $Tk::Version\n",-justify => 'center');
+perl/Tk Version : $Tk::VERSION\n",-justify => 'center');
  $d->Show;
 }
 
@@ -319,6 +323,9 @@ else
  {
   warn "Cannot open /dev/tty:$!";
  }
+
+# print "imageNames(",join(',',$top->imageNames),")\n";
+# print "imageTypes(",join(',',$top->imageTypes),")\n";
 
 Tk::MainLoop();
 

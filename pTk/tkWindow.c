@@ -13,7 +13,7 @@
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
-static char sccsid[] = "@(#) tkWindow.c 1.185 95/06/07 13:13:20";
+static char sccsid[] = "@(#) tkWindow.c 1.187 95/09/25 13:18:57";
 
 #include "tkPort.h"
 #include "tkInt.h"

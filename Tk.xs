@@ -1,12 +1,12 @@
 /*
-  Copyright (c) 1995 Nick Ing-Simmons. All rights reserved.
+  Copyright (c) 1995,1996 Nick Ing-Simmons. All rights reserved.
   This program is free software; you can redistribute it and/or
   modify it under the same terms as Perl itself.
 */
 
-#include "EXTERN.h"
-#include "perl.h"
-#include "XSUB.h"
+#include <EXTERN.h>
+#include <perl.h>
+#include <XSUB.h>
 
 #include "tkGlue.def"
 
@@ -15,9 +15,24 @@
 #include "tkGlue.h"
 #include "leak_util.h"
 
+#ifdef NEED_PRELOAD
+#ifdef I_DLFCN
+#include <dlfcn.h>	/* the dynamic linker include file for Sunos/Solaris */
+#else
+#include <nlist.h>
+#include <link.h>
+#endif
+#define NeedPreload() 1
+#else
+#define NeedPreload() 0
+#endif
+
+
 Tk_Window mainWindow = NULL;
 
 MODULE = Tk	PACKAGE = MainWindow
+
+PROTOTYPES: DISABLE
 
 int
 Count(self)
@@ -81,6 +96,9 @@ CODE:
 OUTPUT:
  RETVAL
 
+void
+check_arenas()
+
 MODULE = Tk	PACKAGE = Tk::Callback
 
 void
@@ -89,7 +107,7 @@ char *	package
 SV *	what
 CODE:
  {
-  ST(0) = sv_bless(LangMakeCallback(what),gv_stashpv(package, TRUE));
+  ST(0) = sv_2mortal(sv_bless(LangMakeCallback(what),gv_stashpv(package, TRUE)));
  }
 
 void 
@@ -97,10 +115,34 @@ DESTROY(object)
 SV *	object
 CODE:
  {
-  XSRETURN_UNDEF;
+  ST(0) = &sv_undef;
  }
 
 MODULE = Tk	PACKAGE = Tk	PREFIX = Tk
+
+int
+NeedPreload()
+
+void
+Preload(filename)
+    char *		filename
+    CODE:
+#ifdef NEED_PRELOAD
+    void *h = dlopen(filename, RTLD_LAZY|RTLD_GLOBAL) ;
+    if (!h)
+     croak("Cannot load %s",filename);
+#endif
+
+double
+timeofday()
+CODE:
+{
+ struct timeval t;
+ Tk_timeofday(&t);
+ RETVAL = t.tv_sec + (double) t.tv_usec/1e6;
+}
+OUTPUT:
+ RETVAL
 
 TkWindow *
 TkGetFocus(win)
@@ -113,13 +155,8 @@ PPCODE:
  {
   int x, y;
   TkGetPointerCoords(win, &x, &y);
-  if (items < 2)
-   {
-    EXTEND(sp,2-items);
-   }
-  ST(0) = sv_2mortal(newSViv(x));
-  ST(1) = sv_2mortal(newSViv(y));
-  XSRETURN(2);
+  PUSHs(sv_2mortal(newSViv(x)));
+  PUSHs(sv_2mortal(newSViv(y)));
  }
 
 MODULE = Tk	PACKAGE = Tk	PREFIX = Tk_
@@ -216,7 +253,7 @@ CODE:
   Tk_ChangeWindowAttributes(win, CWEventMask, Tk_Attributes(win));
  }
 
-void
+int
 SendClientMessage(win,type,xid,format,data)
 Tk_Window	win
 char *		type
@@ -238,15 +275,18 @@ CODE:
   cM.message_type = Tk_InternAtom(win,type);
   cM.format = format;
   memmove(cM.data.b,s,len);
-  if (XSendEvent(cM.display, cM.window, False, NoEventMask, (XEvent *) & cM))
+  if ((RETVAL = XSendEvent(cM.display, cM.window, False, NoEventMask, (XEvent *) & cM)))
    {
     /* XSync may be overkill - but need XFlush ... */
     XSync(cM.display, False);
-    XSRETURN_YES;
    }
-  croak("XSendEvent failed");
-  XSRETURN_NO;
+  else
+   {
+    croak("XSendEvent failed");
+   }
  }
+OUTPUT:
+  RETVAL
 
 void
 XSync(win,flush)
@@ -264,13 +304,8 @@ PPCODE:
  {
   int x, y;
   Tk_GetRootCoords(win, &x, &y);
-  if (items < 2)
-   {
-    EXTEND(sp, 2 - items);
-   }
-  ST(0) = sv_2mortal(newSViv(x));
-  ST(1) = sv_2mortal(newSViv(y));
-  XSRETURN(2);
+  PUSHs(sv_2mortal(newSViv(x)));
+  PUSHs(sv_2mortal(newSViv(y)));
  }
 
 void
@@ -281,15 +316,10 @@ PPCODE:
   int x, y;
   int width, height;
   Tk_GetVRootGeometry(win, &x, &y, &width, &height);
-  if (items < 4)
-   {
-    EXTEND(sp, 4 - items);
-   }
-  ST(0) = sv_2mortal(newSViv(x));
-  ST(1) = sv_2mortal(newSViv(y));
-  ST(2) = sv_2mortal(newSViv(width));
-  ST(3) = sv_2mortal(newSViv(height));
-  XSRETURN(4);
+  PUSHs(sv_2mortal(newSViv(x)));
+  PUSHs(sv_2mortal(newSViv(y)));
+  PUSHs(sv_2mortal(newSViv(width)));
+  PUSHs(sv_2mortal(newSViv(height)));
  } 
 
 Display *
@@ -484,7 +514,7 @@ CODE:
    RETVAL = 0; 
   else
    {
-    Lang_CmdInfo *info = WindowCommand(win,NULL);
+    Lang_CmdInfo *info = WindowCommand(win,NULL,0);
     RETVAL = (info && info->tkwin);
    }
  }
@@ -497,7 +527,7 @@ SV *	win
 int	global
 CODE:
  {
-  Lang_CmdInfo *info = WindowCommand(win,NULL);
+  Lang_CmdInfo *info = WindowCommand(win,NULL,3);
   RETVAL = Tk_Grab(info->interp,info->tkwin,global);
  }
 
@@ -507,7 +537,7 @@ SV *	win
 char *	path
 CODE:
  {
-  Lang_CmdInfo *info = WindowCommand(win,NULL);
+  Lang_CmdInfo *info = WindowCommand(win,NULL,1);
   ST(0) = sv_mortalcopy(WidgetRef(info->interp,path));
  }
 
@@ -528,30 +558,31 @@ Tk_Parent(win)
 Tk_Window	win
 
 SV *
-MainWindow(win)
-	SV *	win
-    CODE:
-     {
-      RETVAL = SvREFCNT_inc(WidgetRef(WindowCommand(win,NULL)->interp,".")); 
-     }
-    OUTPUT:
-     RETVAL
+MainWindow(interp)
+Tcl_Interp *	interp
+CODE:
+ {
+  RETVAL = SvREFCNT_inc(WidgetRef(interp,".")); 
+ }
+OUTPUT:
+ RETVAL
+
+MODULE = Tk	PACKAGE = Tk	PREFIX = Tcl_
+
+void
+Tcl_AddErrorInfo(interp,message)
+Tcl_Interp *	interp
+char *		message
 
 MODULE = Tk	PACKAGE = Tk	PREFIX = Tk_
 
 void
-AddErrorInfo(win,message)
-SV *	win
-char *	message
-CODE:
- {
-  Tcl_AddErrorInfo(WindowCommand(win,NULL)->interp,message);
- }
+Tk_BackgroundError(interp)
+Tcl_Interp *	interp
 
 void
 ClearErrorInfo(win)
 SV *	win
-
 
 BOOT:
  {

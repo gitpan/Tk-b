@@ -282,20 +282,6 @@ typedef struct Tcl_DString {
 #  define Tcl_ValidateAllMemory(x,y)
 
 /*
- * Macro to free up result of interpreter.
- */
-
-#define Tcl_FreeResult(interp)					\
-    if ((interp)->freeProc != 0) {				\
-	if ((interp)->freeProc == (Tcl_FreeProc *) free) {	\
-	    ckfree((interp)->result);				\
-	} else {						\
-	    (*(interp)->freeProc)((interp)->result);		\
-	}							\
-	(interp)->freeProc = 0;					\
-    }
-
-/*
  * Forward declaration of Tcl_HashTable.  Needed by some C++ compilers
  * to prevent errors when the forward reference to Tcl_HashTable is
  * encountered in the Tcl_HashEntry structure.
